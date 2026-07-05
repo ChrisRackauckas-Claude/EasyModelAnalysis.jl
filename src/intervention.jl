@@ -31,9 +31,7 @@ function optimal_threshold_intervention(
     prob1 = remake(prob, p = p1)
     prob2 = remake(prob, p = p2)
 
-    function cost(x::Vector, grad::Vector)
-        return x[2] - x[1]
-    end
+    cost = (x::Vector, grad::Vector) -> x[2] - x[1]
 
     function duration_constraint(x::Vector, grad::Vector, ::Val{p} = Val(false)) where {p}
         prob_preintervention = remake(prob1, tspan = (t0, x[1]))

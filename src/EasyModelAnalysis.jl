@@ -1,15 +1,27 @@
 module EasyModelAnalysis
 
-using LinearAlgebra
-using Reexport
+using Reexport: @reexport
 @reexport using DifferentialEquations
 @reexport using ModelingToolkit
 @reexport using Distributions
-using Optimization, OptimizationBBO, OptimizationNLopt
-using GlobalSensitivity, Turing
-using AbstractMCMC
-using SciMLExpectations
 @reexport using Plots
+
+using LinearAlgebra: LinearAlgebra, I, norm
+using DifferentialEquations: DifferentialEquations, remake, solve
+using ModelingToolkit: ModelingToolkit, Num, Symbolics, arguments, operation
+using Distributions: Distributions, InverseGamma, MvNormal, product_distribution
+using Plots: Plots, @layout, bar, plot, plot!, scatter!
+using Optimization: Optimization, OptimizationProblem
+using OptimizationBBO: OptimizationBBO, BBO_adaptive_de_rand_1_bin_radiuslimited
+using OptimizationNLopt: OptimizationNLopt
+using GlobalSensitivity: GlobalSensitivity, Sobol
+using NLopt: NLopt, Opt, inequality_constraint!
+using Turing: Turing, @varname
+using AbstractMCMC: AbstractMCMC
+using SciMLExpectations: SciMLExpectations, ExpectationProblem, GenericDistribution,
+    HCubatureJL, Koopman, SystemMap
+using SciMLBase: SciMLBase, ContinuousCallback, EnsembleProblem, EnsembleSerial,
+    EnsembleSolution, EnsembleThreads, ODESolution, terminate!
 using SciMLBase.EnsembleAnalysis
 
 include("basics.jl")

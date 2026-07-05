@@ -1,24 +1,26 @@
-using EasyModelAnalysis, Aqua
-@testset "Aqua" begin
-    # find_persistent_tasks_deps Pkg.develop's each dependency. On Julia 1.12 a Pkg
-    # regression (JuliaLang/Pkg.jl#4587) makes Pkg.develop honor a developed
-    # dependency's relative [sources] and resolve it against the depot, so
-    # OptimizationBBO (which pins its in-repo OptimizationBase via [sources], as
-    # every Optimization.jl sublibrary does) errors with "expected package
-    # OptimizationBase to exist at path .../OptimizationBBO/OptimizationBase". The
-    # [sources] is correct and load-bearing for the monorepo; the bug is upstream.
-    # Remove this version gate once Pkg.jl#4587 is fixed (see EasyModelAnalysis#303).
-    if VERSION < v"1.12"
-        Aqua.find_persistent_tasks_deps(EasyModelAnalysis)
-    end
-    Aqua.test_ambiguities(EasyModelAnalysis, recursive = false)
-    Aqua.test_deps_compat(EasyModelAnalysis)
-    Aqua.test_piracies(
-        EasyModelAnalysis,
-        treat_as_own = []
-    )
-    Aqua.test_project_extras(EasyModelAnalysis)
-    Aqua.test_stale_deps(EasyModelAnalysis)
-    Aqua.test_unbound_args(EasyModelAnalysis)
-    Aqua.test_undefined_exports(EasyModelAnalysis, broken = true)
-end
+using SciMLTesting, EasyModelAnalysis, Test
+
+run_qa(
+    EasyModelAnalysis;
+    explicit_imports = true,
+    aqua_kwargs = (; ambiguities = (; recursive = false)),
+    # undefined_exports: `Variable` and `rotate!` leak in (dead) via `@reexport`
+    # (SciML/EasyModelAnalysis.jl#300)
+    aqua_broken = (:undefined_exports,),
+    ei_kwargs = (;
+        all_qualified_accesses_via_owners = (;
+            ignore = (
+                # `value` is the Symbolics unwrap API, re-exported through ModelingToolkit
+                # (the direct dependency); accessing it as `ModelingToolkit.value` is intended.
+                :value,
+            ),
+        ),
+        all_qualified_accesses_are_public = (;
+            ignore = (
+                :AbstractMCMCEnsemble,  # AbstractMCMC: no public alias for the ensemble type
+                :LN_SBPLX,              # NLopt: algorithm constant, not marked public
+                :value,                 # ModelingToolkit: Symbolics unwrap re-export, not marked public
+            ),
+        ),
+    ),
+)
