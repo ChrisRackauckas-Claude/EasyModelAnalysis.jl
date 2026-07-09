@@ -2,6 +2,10 @@
 
 ```@docs
 stop_at_threshold
+get_threshold
+prob_violating_threshold
 optimal_threshold_intervention
 optimal_parameter_intervention_for_threshold
+optimal_parameter_threshold
+optimal_parameter_intervention_for_reach
 ```

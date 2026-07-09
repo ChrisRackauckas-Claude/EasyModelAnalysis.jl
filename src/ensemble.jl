@@ -48,6 +48,48 @@ end
 (f::EnsembleProbForwarder)(prob, i::Integer, repeat) = f.all_probs[i]
 (f::EnsembleProbForwarder)(prob, ctx) = f.all_probs[ctx.sim_id]
 
+"""
+    bayesian_ensemble(probs, ps, datas;
+        noise_prior = InverseGamma(2, 3),
+        mcmcensemble = Turing.MCMCSerial(),
+        nchains = 4, niter = 1_000, keep = 100)
+
+Build an ensemble of calibrated models by Bayesian-fitting each model to its own data
+and collecting posterior samples of the fitted problems into a single `EnsembleProblem`.
+
+For each model, [`bayesian_datafit`](@ref) is run to obtain posterior samples of the
+parameters, and the last `keep` posterior draws are turned into `remake`d problems (one
+problem per draw). The problems from all models are concatenated, and the returned
+`EnsembleProblem` uses an internal `prob_func` that selects the `i`th collected problem so
+that the `i`th trajectory solves it. Solving the returned problem with
+`trajectories = length(enprob.prob_func.all_probs)` therefore samples the full posterior
+ensemble across all models.
+
+## Arguments
+
+  - `probs`: a vector of `ODEProblem`s, one per model to be calibrated.
+  - `ps`: a vector where the `i`th entry is the parameter specification (a vector of
+    symbolic-parameter `=> prior` pairs) passed to [`bayesian_datafit`](@ref) for `probs[i]`.
+  - `datas`: a vector where the `i`th entry is the data (of the form accepted by
+    [`bayesian_datafit`](@ref)) used to calibrate `probs[i]`.
+
+## Keyword Arguments
+
+  - `noise_prior`: prior distribution on the observation noise passed to
+    [`bayesian_datafit`](@ref). Defaults to `InverseGamma(2, 3)`.
+  - `mcmcensemble`: the Turing MCMC ensemble strategy used for sampling. Defaults to
+    `Turing.MCMCSerial()`.
+  - `nchains`: number of MCMC chains per model. Defaults to `4`.
+  - `niter`: number of MCMC iterations per chain. Defaults to `1_000`.
+  - `keep`: number of posterior draws (from the tail of the chain) kept per model to form
+    the ensemble. Defaults to `100`.
+
+# Returns
+
+  - An `EnsembleProblem` whose trajectories correspond to the collected posterior-sample
+    problems from all models. Use the resulting ensemble solution together with
+    [`ensemble_weights`](@ref) to weight the models against data.
+"""
 function bayesian_ensemble(
         probs, ps, datas;
         noise_prior = InverseGamma(2, 3),

@@ -4,4 +4,5 @@
 datafit
 global_datafit
 bayesian_datafit
+model_forecast_score
 ```

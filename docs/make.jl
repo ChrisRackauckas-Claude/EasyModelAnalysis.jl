@@ -62,6 +62,7 @@ makedocs(
             "api/data_fitting_calibration.md",
             "api/sensitivity_analysis.md",
             "api/threshold_interventions.md",
+            "api/ensemble_modeling.md",
         ],
     ]
 )
