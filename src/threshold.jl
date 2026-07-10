@@ -57,9 +57,23 @@ function _threshold_violation(threshold)
 end
 
 """
-    prob_violating_thresholdd(prob, p, thresholds)
+    prob_violating_threshold(prob, p, thresholds)
 
 Returns the probability of violating `thresholds` given distributions of parameters `p`.
+
+## Arguments
+
+  - `prob`: An `ODEProblem`.
+  - `p`: a vector of pairs from symbolic parameters to the distributions describing their
+    uncertainty, e.g. `[α => Uniform(0.0, 1.0)]`.
+  - `thresholds`: a vector of symbolic inequality expressions (e.g. `[x > 10.0, y < 1.0]`)
+    that define the violating region. An `x > bound` threshold is violated when the state
+    `x` exceeds `bound` at any saved time, and `x < bound` when it falls below it.
+
+# Returns
+
+  - The probability (a scalar in `[0, 1]`) that at least one threshold is violated,
+    computed as the Koopman expectation of the violation indicator over `p`.
 """
 function prob_violating_threshold(prob, p, thresholds)
     pkeys = getfield.(p, :first)
