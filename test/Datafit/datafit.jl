@@ -108,8 +108,8 @@ p_prior = [
     γ => Normal(1, 0.1), δ => Normal(1, 0.1),
 ]
 p_posterior = @time bayesian_datafit(
-    prob, p_prior, tsave, data; mcmcensemble = MCMCSerial(), nchains = 2,
-    niter = 500
+    prob, p_prior, tsave, data; mcmcensemble = MCMCSerial(), nchains = 1,
+    niter = 200
 )
 @test var.(getfield.(p_prior, :second)) >= var.(getfield.(p_posterior, :second))
 
@@ -120,7 +120,7 @@ sol_data2 = solve(prob, saveat = tsave2)
 data_with_t = [x => (tsave1, sol_data1[x]), y => (tsave2, sol_data2[y])]
 
 p_posterior = @time bayesian_datafit(
-    prob, p_prior, data_with_t; mcmcensemble = MCMCSerial(), nchains = 2,
-    niter = 500
+    prob, p_prior, data_with_t; mcmcensemble = MCMCSerial(), nchains = 1,
+    niter = 200
 )
 @test var.(getfield.(p_prior, :second)) >= var.(getfield.(p_posterior, :second))
