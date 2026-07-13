@@ -89,7 +89,6 @@ eqs_obs = [
 u0_obs = [
     x => 1.0,
     y => 1.0,
-    x_2 => 2.0,
 ]
 
 prob_obs = ODEProblem(sys_obs, u0_obs, tspan, p, jac = true)
