@@ -4,7 +4,6 @@ authors = ["SciML"]
 version = "1.2.2"
 
 [deps]
-AbstractMCMC = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GlobalSensitivity = "af5da776-676b-467e-8baf-acd8249e4f0f"
@@ -21,7 +20,6 @@ SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
-AbstractMCMC = "5.2"
 Aqua = "0.8"
 DifferentialEquations = "7, 8.0"
 Distributions = "0.25"

@@ -146,7 +146,7 @@ function datafit(
         lb = fill(-Inf, length(p)),
         ub = fill(Inf, length(p)), (prob, pkeys, t, data)
     )
-    res = solve(oprob, NLopt.LN_SBPLX(); solve_kws...)
+    res = solve(oprob, Opt(:LN_SBPLX, length(p)); solve_kws...)
     return Pair.(pkeys, res.u)
 end
 
@@ -159,7 +159,7 @@ function datafit(prob, p::Vector{Pair{Num, Float64}}, data; loss = l2loss, solve
         ub = fill(Inf, length(p)), (prob, pkeys, data)
     )
     l2loss(last.(p), (prob, pkeys, data))
-    res = solve(oprob, NLopt.LN_SBPLX(); solve_kws...)
+    res = solve(oprob, Opt(:LN_SBPLX, length(p)); solve_kws...)
     return Pair.(pkeys, res.u)
 end
 
@@ -378,7 +378,7 @@ function bayesian_datafit(
         t,
         data;
         noise_prior = InverseGamma(2, 3),
-        mcmcensemble::AbstractMCMC.AbstractMCMCEnsemble = Turing.MCMCThreads(),
+        mcmcensemble = Turing.MCMCThreads(),
         nchains = 4,
         niter = 1000
     )
@@ -403,7 +403,7 @@ function bayesian_datafit(
         p,
         data;
         noise_prior = InverseGamma(2, 3),
-        mcmcensemble::AbstractMCMC.AbstractMCMCEnsemble = Turing.MCMCThreads(),
+        mcmcensemble = Turing.MCMCThreads(),
         nchains = 4,
         niter = 1_000
     )

@@ -62,7 +62,7 @@ end
     bayesian_ensemble(
         probs, ps, datas;
         noise_prior = InverseGamma(2, 3),
-        mcmcensemble::AbstractMCMC.AbstractMCMCEnsemble = Turing.MCMCSerial(),
+        mcmcensemble = Turing.MCMCSerial(),
         nchains = 4, niter = 1_000, keep = 100
     )
 

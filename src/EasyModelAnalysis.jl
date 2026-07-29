@@ -11,7 +11,6 @@ using OptimizationNLopt: OptimizationNLopt
 using GlobalSensitivity: GlobalSensitivity, Sobol
 using NLopt: NLopt, Opt, inequality_constraint!
 using Turing: Turing, @varname
-using AbstractMCMC: AbstractMCMC
 using SciMLExpectations: SciMLExpectations, ExpectationProblem, GenericDistribution,
     HCubatureJL, Koopman, SystemMap
 using SciMLBase: SciMLBase, ContinuousCallback, EnsembleProblem, EnsembleSerial,

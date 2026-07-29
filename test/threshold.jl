@@ -47,8 +47,8 @@ threshold_prob = ODEProblem(
     threshold_system, [threshold_state => 0.01], (0.0, 1.0), [threshold_rate => 1.0]
 )
 @test 0.0 <= prob_violating_threshold(
-    threshold_prob, [threshold_rate => Uniform(0.9, 1.1)], [threshold_state > 0.01]
-) <= 1.0
+        threshold_prob, [threshold_rate => Uniform(0.9, 1.1)], [threshold_state > 0.01]
+    ) <= 1.0
 
 # Intervention
 @variables x(t)
