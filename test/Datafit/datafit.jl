@@ -1,4 +1,5 @@
 using EasyModelAnalysis, Test
+using DifferentialEquations, Distributions, ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as D
 using Turing: MCMCSerial
 

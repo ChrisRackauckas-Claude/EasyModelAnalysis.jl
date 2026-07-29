@@ -14,12 +14,14 @@ infinite food source. As you may recall from this model in elementary ecology co
 ODE system, which we define in the ModelingToolkit sense:
 
 ```@example threshold_intervention
-using EasyModelAnalysis
-@variables t 🐰(t)
+using DifferentialEquations, EasyModelAnalysis, ModelingToolkit, Plots
+@independent_variables t
+@variables 🐰(t)
 @parameters p
 D = Differential(t)
 eqs = [D(🐰) ~ p * 🐰]
-@named sys = ODESystem(eqs)
+@named sys = ODESystem(eqs, t)
+sys = structural_simplify(sys)
 prob = ODEProblem(sys, [🐰 => 0.01], (0.0, 10.0), [p => 1.0])
 ```
 

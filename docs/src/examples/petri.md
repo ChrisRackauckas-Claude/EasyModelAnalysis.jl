@@ -4,7 +4,7 @@ First, let's load all the libraries and define the simple SIR model in
 AlgebraicPetri.jl.
 
 ```@example sir_petri
-using EasyModelAnalysis
+using DifferentialEquations, EasyModelAnalysis, ModelingToolkit, Plots
 using UnPack
 using AlgebraicPetri
 using AlgebraicPetri.Epidemiology
@@ -35,7 +35,7 @@ Then, we can use `ODESystem` to convert the Petri net to an `ODESystem` and all
 the analysis functionalities would follow naturally.
 
 ```@example sir_petri
-sys = ODESystem(bnsir)
+sys = complete(ODESystem(bnsir))
 @unpack S, I, R, inf, rec = sys
 prob = ODEProblem(sys, [S => 0.9, I => 0.1, R => 0.0], (0, 10.0), [inf => 7.0, rec => 1.0])
 sol = solve(prob)

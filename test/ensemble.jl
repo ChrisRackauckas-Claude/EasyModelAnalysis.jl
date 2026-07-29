@@ -1,4 +1,5 @@
 using EasyModelAnalysis, LinearAlgebra, Test
+using DifferentialEquations, Distributions, ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as ∂
 
 @parameters β = 0.05 c = 10.0 γ = 0.25

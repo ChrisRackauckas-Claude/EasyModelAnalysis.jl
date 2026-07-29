@@ -1,20 +1,30 @@
 """
-    ensemble_weights(sol::EnsembleSolution, data_ensem)
+    ensemble_weights(sol::EnsembleSolution, data_ensem) -> AbstractVector
 
 Returns the weights for a linear combination of the models
 so that the prediction = sum(weight[i] * model_prediction[i])
 where `sol` is the ensemble solution and `data_ensem` is the
 dataset on which the ensembler should be trained on.
 
-## Arguments
+# Arguments
 
-  - `sol`: the ensemble solution of the prediction data
-  - `data_ensem`: a vector of pairs from the symbolic states to the measurements
+  - `sol`: ensemble solution whose trajectories provide model predictions.
+  - `data_ensem`: pairs from symbolic states to measurements used to fit the combination.
+
+# Returns
+
+  - Least-squares weights for the linear combination of ensemble predictions.
 
 !!! note
 
     This function currently assumes that `sol.t` matches the time points of all measurements
-    in `data_ensem`!
+    in `data_ensem`.
+
+# Examples
+
+```julia
+weights = ensemble_weights(ensemble_solution, [x => observations])
+```
 """
 function ensemble_weights(sol::EnsembleSolution, data_ensem)
     obs = first.(data_ensem)
@@ -49,10 +59,12 @@ end
 (f::EnsembleProbForwarder)(prob, ctx) = f.all_probs[ctx.sim_id]
 
 """
-    bayesian_ensemble(probs, ps, datas;
+    bayesian_ensemble(
+        probs, ps, datas;
         noise_prior = InverseGamma(2, 3),
-        mcmcensemble = Turing.MCMCSerial(),
-        nchains = 4, niter = 1_000, keep = 100)
+        mcmcensemble::AbstractMCMC.AbstractMCMCEnsemble = Turing.MCMCSerial(),
+        nchains = 4, niter = 1_000, keep = 100
+    )
 
 Build an ensemble of calibrated models by Bayesian-fitting each model to its own data
 and collecting posterior samples of the fitted problems into a single `EnsembleProblem`.
@@ -65,15 +77,16 @@ that the `i`th trajectory solves it. Solving the returned problem with
 `trajectories = length(enprob.prob_func.all_probs)` therefore samples the full posterior
 ensemble across all models.
 
-## Arguments
+# Arguments
 
   - `probs`: a vector of `ODEProblem`s, one per model to be calibrated.
   - `ps`: a vector where the `i`th entry is the parameter specification (a vector of
-    symbolic-parameter `=> prior` pairs) passed to [`bayesian_datafit`](@ref) for `probs[i]`.
+    symbolic-parameter `=> prior` pairs) passed to [`bayesian_datafit`](@ref) for
+    `probs[i]`.
   - `datas`: a vector where the `i`th entry is the data (of the form accepted by
     [`bayesian_datafit`](@ref)) used to calibrate `probs[i]`.
 
-## Keyword Arguments
+# Keywords
 
   - `noise_prior`: prior distribution on the observation noise passed to
     [`bayesian_datafit`](@ref). Defaults to `InverseGamma(2, 3)`.
@@ -89,11 +102,18 @@ ensemble across all models.
   - An `EnsembleProblem` whose trajectories correspond to the collected posterior-sample
     problems from all models. Use the resulting ensemble solution together with
     [`ensemble_weights`](@ref) to weight the models against data.
+
+# Examples
+
+```julia
+ensemble_problem = bayesian_ensemble([prob1, prob2], priors, datasets; keep = 50)
+ensemble_solution = solve(ensemble_problem, Tsit5(); trajectories = 100)
+```
 """
 function bayesian_ensemble(
         probs, ps, datas;
         noise_prior = InverseGamma(2, 3),
-        mcmcensemble::AbstractMCMC.AbstractMCMCEnsemble = Turing.MCMCSerial(),
+        mcmcensemble = Turing.MCMCSerial(),
         nchains = 4,
         niter = 1_000,
         keep = 100

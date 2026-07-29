@@ -4,9 +4,10 @@ In this tutorial, we will showcase how to perform global sensitivity analysis of
 modified second order ODE Lorenz equation model from before:
 
 ```@example sensitivity
-using EasyModelAnalysis
+using DifferentialEquations, Distributions, EasyModelAnalysis, ModelingToolkit, Plots
 
-@parameters t σ ρ β
+@independent_variables t
+@parameters σ ρ β
 @variables x(t) y(t) z(t)
 D = Differential(t)
 
@@ -14,7 +15,7 @@ eqs = [D(D(x)) ~ σ * (y - x),
     D(y) ~ x * (ρ - z) - y,
     D(z) ~ x * y - β * z]
 
-@named sys = ODESystem(eqs)
+@named sys = ODESystem(eqs, t)
 sys = structural_simplify(sys)
 
 u0 = [D(x) => 2.0,
@@ -45,7 +46,7 @@ Thus for example, let's calculate the sensitivity of `y(100)` over the parameter
 
 ```@example sensitivity
 pbounds = [ρ => [0.0, 20.0], β => [0.0, 100.0]]
-sensres = get_sensitivity(prob, 100.0, y, pbounds; samples = 2000)
+sensres = EasyModelAnalysis.get_sensitivity(prob, 100.0, y, pbounds; samples = 2000)
 ```
 
 The output shows values of `first_order`, `second_order` and `total_order` sensitivities. These are quantities that define the
@@ -110,7 +111,7 @@ and notably, all values are normalized relative quantities.
 Thus we can finally use the `create_sensitivity_plot` function to visualize the field of sensitivity results:
 
 ```@example sensitivity
-create_sensitivity_plot(prob, 100.0, y, pbounds; samples = 2000)
+EasyModelAnalysis.create_sensitivity_plot(prob, 100.0, y, pbounds; samples = 2000)
 ```
 
 which shows the relative sizes of the values in plots for the first, second, and total index values.

@@ -1,12 +1,33 @@
 """
-    stop_at_threshold(prob, obs, threshold)
+    stop_at_threshold(
+            prob, obs, threshold; alg = nothing, kw...
+        ) -> SciMLBase.AbstractSciMLSolution
 
-Simulates `prob` until `obs == threshold`.
+Solve `prob` until the symbolic observable `obs` reaches `threshold`.
+
+# Arguments
+
+  - `prob`: a ModelingToolkit-backed SciML problem.
+  - `obs`: the symbolic observable defining the event condition.
+  - `threshold::Number`: value at which integration terminates.
+
+# Keywords
+
+  - `alg`: optional SciML solver algorithm. When omitted, `solve(prob; kw...)` chooses it.
+  - `kw...`: keyword arguments forwarded to `solve`.
+
+# Returns
+
+  - The solution terminated by the threshold callback, or by the solver if it terminates
+    earlier.
+
+# Examples
+
+```julia
+sol = stop_at_threshold(prob, x, 10.0; abstol = 1.0e-8)
+```
 """
 function stop_at_threshold(prob, obs, threshold; alg = nothing, kw...)
-    sys = prob.f.sys
-    sys isa ModelingToolkit.AbstractSystem ||
-        error("The problem must be a ModelingToolkit model.")
     obsfun = prob.f.observed(obs)
     condition = let obsfun = obsfun, threshold = threshold
         (u, t, integrator) -> obsfun(u, integrator.p, t) - threshold
@@ -22,10 +43,31 @@ function stop_at_threshold(prob, obs, threshold; alg = nothing, kw...)
 end
 
 """
-    get_threshold(prob, obs, threshold)
+    get_threshold(prob, obs, threshold; alg = nothing, kw...) -> Number
 
-Returns the value `t` for the time point where the solution of the model `prob` has the observation
-`obs` hit the `threshold` value.
+Return the time where `obs` first reaches `threshold` while solving `prob`.
+
+# Arguments
+
+  - `prob`: a ModelingToolkit-backed SciML problem.
+  - `obs`: the symbolic observable defining the event condition.
+  - `threshold::Number`: value at which integration terminates.
+
+# Keywords
+
+  - `alg`: accepted for API compatibility but currently unused; solver selection follows the
+    default `solve` behavior.
+  - `kw...`: keyword arguments forwarded to [`stop_at_threshold`](@ref).
+
+# Returns
+
+  - The final time of the threshold-terminated solution.
+
+# Examples
+
+```julia
+t_hit = get_threshold(prob, x, 10.0)
+```
 """
 function get_threshold(prob, obs, threshold; alg = nothing, kw...)
     sol = stop_at_threshold(prob, obs, threshold; alg = nothing, kw...)
@@ -38,18 +80,18 @@ end
 # Symbolics canonicalizes comparisons, so `x > 10.0` is stored as `<(10.0, x)`:
 # the constant can land on either side of the operator, which this normalizes.
 function _threshold_violation(threshold)
-    v = ModelingToolkit.value(threshold)
-    op = operation(v)
-    args = arguments(v)
-    isconst(z) = ModelingToolkit.value(z) isa Number
+    v = Symbolics.value(threshold)
+    op = SymbolicUtils.operation(v)
+    args = SymbolicUtils.arguments(v)
+    isconst(z) = Symbolics.value(z) isa Number
     if isconst(args[1])
-        bound = ModelingToolkit.value(args[1])
-        state = args[2]
+        bound = Symbolics.value(args[1])
+        state = Num(args[2])
         # `bound op state`: `bound < state` ⟺ `state > bound` (upper violation).
         upper = (op === <) || (op === <=)
     else
-        bound = ModelingToolkit.value(args[2])
-        state = args[1]
+        bound = Symbolics.value(args[2])
+        state = Num(args[1])
         # `state op bound`: `state > bound`/`state >= bound` is the upper violation.
         upper = (op === >) || (op === >=)
     end
@@ -61,7 +103,7 @@ end
 
 Returns the probability of violating `thresholds` given distributions of parameters `p`.
 
-## Arguments
+# Arguments
 
   - `prob`: An `ODEProblem`.
   - `p`: a vector of pairs from symbolic parameters to the distributions describing their
@@ -74,6 +116,12 @@ Returns the probability of violating `thresholds` given distributions of paramet
 
   - The probability (a scalar in `[0, 1]`) that at least one threshold is violated,
     computed as the Koopman expectation of the violation indicator over `p`.
+
+# Examples
+
+```julia
+p_violate = prob_violating_threshold(prob, [k => Uniform(0.8, 1.2)], [x > 10.0])
+```
 """
 function prob_violating_threshold(prob, p, thresholds)
     pkeys = getfield.(p, :first)
@@ -103,9 +151,12 @@ function prob_violating_threshold(prob, p, thresholds)
 end
 
 """
-    optimal_parameter_threshold(prob, obs, threshold, cost, ps, lb, ub; ineq_cons = nothing, maxtime = 60, kw...)
+    optimal_parameter_threshold(
+        prob, obs, threshold, cost, ps, lb, ub;
+        ineq_cons = nothing, maxtime = 60, kw...
+    )
 
-## Arguments
+# Arguments
 
   - `prob`: An ODEProblem.
   - `obs`: The observation symbolic expression.
@@ -115,17 +166,26 @@ end
   - `lb`: the lower bounds of the parameters e.g. `[-10, -5]`.
   - `ub`: the upper bounds of the parameters e.g. `[5, 10]`.
 
-## Keyword Arguments
+# Keywords
 
   - `maxtime`: Maximum optimization time. Defaults to `60`.
   - `ineq_cons`: a vector of symbolic expressions in terms of symbolic
     parameters. The optimizer will enforce `ineq_cons .< 0`.
+  - `kw...`: keyword arguments forwarded to the threshold-terminated solves.
 
 # Returns
 
   - `opt_p`: Optimal intervention parameters.
   - `sol`: Solution with the optimal intervention parameters.
   - `ret`: Return code from the optimization.
+
+# Examples
+
+```julia
+parameters, solution, retcode = optimal_parameter_threshold(
+    prob, x, 10.0, k, [k], [0.5], [1.5]
+)
+```
 """
 function optimal_parameter_threshold(
         prob, obs, threshold, cost, ps, lb, ub;

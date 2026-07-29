@@ -5,9 +5,10 @@ If one is unfamiliar with ModelingToolkit, check out its tutorial before getting
 our model as the ModelingToolkit's README example:
 
 ```@example analysis
-using EasyModelAnalysis, Plots
+using DifferentialEquations, EasyModelAnalysis, ModelingToolkit, Plots
 
-@parameters t σ ρ β
+@independent_variables t
+@parameters σ ρ β
 @variables x(t) y(t) z(t)
 D = Differential(t)
 
@@ -15,7 +16,7 @@ eqs = [D(D(x)) ~ σ * (y - x),
     D(y) ~ x * (ρ - z) - y,
     D(z) ~ x * y - β * z]
 
-@named sys = ODESystem(eqs)
+@named sys = ODESystem(eqs, t)
 sys = structural_simplify(sys)
 
 u0 = [D(x) => 2.0,

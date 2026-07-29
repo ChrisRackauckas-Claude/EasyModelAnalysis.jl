@@ -79,44 +79,62 @@ end
 
 Fit parameters `p` to `data` measured at times `t`.
 
-## Arguments
+# Arguments
 
-  - `prob`: ODEProblem
-  - `p`: Vector of pairs of symbolic parameters and initial guesses for the parameters.
-  - `t`: Vector of time-points
-  - `data`: Vector of pairs of symbolic states and measurements of these states at times `t`.
+  - `prob`: a SciML problem with symbolic indexing.
+  - `p`: pairs of symbolic parameters and initial guesses.
+  - `t`: global measurement times for the four-argument form.
+  - `data`: symbolic-state measurements, either at `t` or paired with per-state times.
 
-## Keyword Arguments
+# Keywords
 
-    - `loss`: the loss function used for fitting. Defaults to `EasyModelAnalysis.l2loss`,
-      with an alternative being `EasyModelAnalysis.relative_l2loss` for relative weighted error.
+  - `loss = l2loss`: objective function used for fitting. `relative_l2loss` provides a
+    relative weighted error.
+  - `solve_kws = (;)`: keyword arguments forwarded to the optimization solve.
 
-`p` does not have to contain all the parameters required to solve `prob`,
-it can be a subset of parameters. Other parameters necessary to solve `prob`
+# Returns
+
+  - Parameter-to-fitted-value pairs, in the same symbolic parameter order as `p`.
+
+`p` does not have to contain all the parameters required to solve `prob`; it can be a subset of
+parameters. Other parameters necessary to solve `prob`
 default to the parameter values found in `prob.p`.
 Similarly, not all states must be measured.
 
 ## Data Definition
 
-The data definition is given as a vctor of pairs. If `t` is specified globally for the datafit,
-then those time series correspond to the time points specified. For example,
+The data definition is given as a vector of pairs. With globally specified `t`, those time
+series correspond to the specified time points. For example,
 
 ```julia
-[x => [11.352378507900013, 11.818374125301172, -10.72999081810307]
- z => [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545]]
+[
+    x => [11.352378507900013, 11.818374125301172, -10.72999081810307]
+    z => [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545]
+]
 ```
 
-then if `datafit(prob, p, t, data)`, `t` must be length 3 and these values correspond to `x(t[i])`.
+For `datafit(prob, p, t, data)`, `t` must have length 3 and these values correspond to
+`x(t[i])`.
 
 If `datafit(prob, p, data)`, then the data must be a tuple of (t, timeseries), for example:
 
 ```julia
-[x => ([1.0, 2.0, 3.0], [11.352378507900013, 11.818374125301172, -10.72999081810307])
- z => ([0.5, 1.5, 2.5, 3.5],
-     [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545])]
+[
+    x => ([1.0, 2.0, 3.0], [11.352378507900013, 11.818374125301172, -10.72999081810307])
+    z => (
+        [0.5, 1.5, 2.5, 3.5],
+        [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545],
+    )
+]
 ```
 
 where this means x(2.0) == 11.81...
+
+# Examples
+
+```julia
+fit = datafit(prob, [k => 1.0], times, [x => measurements])
+```
 """
 function datafit(
         prob, p::Vector{Pair{Num, Float64}}, t, data; loss = l2loss, solve_kws = (;)
@@ -151,46 +169,62 @@ end
 
 Fit parameters `p` to `data` measured at times `t`.
 
-## Arguments
+# Arguments
 
-  - `prob`: ODEProblem
-  - `pbounds`: Vector of pairs of symbolic parameters to vectors of lower and upper bounds for the parameters.
-  - `t`: Vector of time-points
-  - `data`: Vector of pairs of symbolic states and measurements of these states at times `t`.
+  - `prob`: a SciML problem with symbolic indexing.
+  - `pbounds`: symbolic parameter-to-`[lower, upper]` bound pairs.
+  - `t`: global measurement times for the four-argument form.
+  - `data`: symbolic-state measurements, either at `t` or paired with per-state times.
 
-## Keyword Arguments
+# Keywords
 
-  - `maxiters`: how long to run the optimization for. Defaults to 10000. Larger values are slower but more
-    robust.
-  - `loss`: the loss function used for fitting. Defaults to `EasyModelAnalysis.l2loss`, with an alternative
-    being `EasyModelAnalysis.relative_l2loss` for relative weighted error.
+  - `maxiters::Integer = 10_000`: optimization iteration limit.
+  - `loss = l2loss`: objective function used for fitting.
+  - `solve_kws = (;)`: additional keyword arguments forwarded to the optimization solve.
 
-`p` does not have to contain all the parameters required to solve `prob`,
-it can be a subset of parameters. Other parameters necessary to solve `prob`
+# Returns
+
+  - Parameter-to-fitted-value pairs, in the same symbolic parameter order as `pbounds`.
+
+`pbounds` does not have to contain all the parameters required to solve `prob`; it can describe a
+subset of parameters. Other parameters necessary to solve `prob`
 default to the parameter values found in `prob.p`.
 Similarly, not all states must be measured.
 
 ## Data Definition
 
-The data definition is given as a vctor of pairs. If `t` is specified globally for the datafit,
-then those time series correspond to the time points specified. For example,
+The data definition is given as a vector of pairs. With globally specified `t`, those time
+series correspond to the specified time points. For example,
 
 ```julia
-[x => [11.352378507900013, 11.818374125301172, -10.72999081810307]
- z => [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545]]
+[
+    x => [11.352378507900013, 11.818374125301172, -10.72999081810307]
+    z => [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545]
+]
 ```
 
-then if `datafit(prob, p, t, data)`, `t` must be length 3 and these values correspond to `x(t[i])`.
+For `datafit(prob, p, t, data)`, `t` must have length 3 and these values correspond to
+`x(t[i])`.
 
 If `datafit(prob, p, data)`, then the data must be a tuple of (t, timeseries), for example:
 
 ```julia
-[x => ([1.0, 2.0, 3.0], [11.352378507900013, 11.818374125301172, -10.72999081810307])
- z => ([0.5, 1.5, 2.5, 3.5],
-     [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545])]
+[
+    x => ([1.0, 2.0, 3.0], [11.352378507900013, 11.818374125301172, -10.72999081810307])
+    z => (
+        [0.5, 1.5, 2.5, 3.5],
+        [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545],
+    )
+]
 ```
 
 where this means x(2.0) == 11.81...
+
+# Examples
+
+```julia
+fit = global_datafit(prob, [k => [0.5, 1.5]], times, [x => measurements])
+```
 """
 function global_datafit(
         prob, pbounds, t, data; maxiters = 10000, loss = l2loss, solve_kws = (;)
@@ -280,32 +314,63 @@ Turing.@model function bayesianODE(
 end
 
 """
-    bayesian_datafit(prob, p, t, data)
-    bayesian_datafit(prob, p, data)
+    bayesian_datafit(prob, p, t, data; noise_prior, mcmcensemble, nchains, niter)
+    bayesian_datafit(prob, p, data; noise_prior, mcmcensemble, nchains, niter)
 
 Calculate posterior distribution for parameters `p` given `data` measured at times `t`.
 
+# Arguments
+
+  - `prob`: a SciML problem with symbolic indexing.
+  - `p`: symbolic parameter-to-prior-distribution pairs.
+  - `t`: global measurement times for the four-argument form.
+  - `data`: symbolic-state measurements, either at `t` or paired with per-state times.
+
+# Keywords
+
+  - `noise_prior = InverseGamma(2, 3)`: prior distribution for observation noise.
+  - `mcmcensemble = Turing.MCMCThreads()`: Turing chain execution strategy.
+  - `nchains::Integer = 4`: number of chains to sample.
+  - `niter::Integer = 1_000`: samples per chain.
+
+# Returns
+
+  - Parameter-to-posterior-sample pairs.
+
 ## Data Definition
 
-The data definition is given as a vctor of pairs. If `t` is specified globally for the datafit,
-then those time series correspond to the time points specified. For example,
+The data definition is given as a vector of pairs. With globally specified `t`, those time
+series correspond to the specified time points. For example,
 
 ```julia
-[x => [11.352378507900013, 11.818374125301172, -10.72999081810307]
- z => [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545]]
+[
+    x => [11.352378507900013, 11.818374125301172, -10.72999081810307]
+    z => [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545]
+]
 ```
 
-then if `datafit(prob, p, t, data)`, `t` must be length 3 and these values correspond to `x(t[i])`.
+For `datafit(prob, p, t, data)`, `t` must have length 3 and these values correspond to
+`x(t[i])`.
 
 If `datafit(prob, p, data)`, then the data must be a tuple of (t, timeseries), for example:
 
 ```julia
-[x => ([1.0, 2.0, 3.0], [11.352378507900013, 11.818374125301172, -10.72999081810307])
- z => ([0.5, 1.5, 2.5, 3.5],
-     [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545])]
+[
+    x => ([1.0, 2.0, 3.0], [11.352378507900013, 11.818374125301172, -10.72999081810307])
+    z => (
+        [0.5, 1.5, 2.5, 3.5],
+        [2.005502877055581, 13.626953144513832, 5.382984515620634, 12.232084518374545],
+    )
+]
 ```
 
 where this means x(2.0) == 11.81...
+
+# Examples
+
+```julia
+posterior = bayesian_datafit(prob, [k => LogNormal(0, 0.2)], times, [x => measurements])
+```
 """
 function bayesian_datafit(
         prob,
@@ -359,17 +424,28 @@ function bayesian_datafit(
 end
 
 """
-    model_forecast_score(probs::AbstractVector, ts::AbstractVector, dataset::AbstractVector{<:Pair})
+    model_forecast_score(
+            probs::AbstractVector, ts::AbstractVector,
+            dataset::AbstractVector{<:Pair}
+        ) -> AbstractVector
 
 Compute the L2 distance between each problem and the dataset.
 
-Arguments:
+# Arguments
 
-  - `probs`: a vector of problems to simulate.
-  - `ts`: time points of the dataset.
-  - `dataset`: dataset of the form of `[S => zeros(n), I => zeros(n)]`.
+  - `probs`: problems to simulate.
+  - `ts`: measurement time points.
+  - `dataset`: symbolic-state measurements such as `[S => zeros(n), I => zeros(n)]`.
 
-Output: the L2 distance from the dataset for each problem.
+# Returns
+
+  - One L2-distance score per entry of `probs`; lower scores fit the dataset more closely.
+
+# Examples
+
+```julia
+scores = model_forecast_score([prob1, prob2], times, [x => measurements])
+```
 """
 function model_forecast_score(
         probs::AbstractVector, ts::AbstractVector,

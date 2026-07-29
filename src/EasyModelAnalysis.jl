@@ -1,14 +1,8 @@
 module EasyModelAnalysis
 
-using Reexport: @reexport
-@reexport using DifferentialEquations
-@reexport using ModelingToolkit
-@reexport using Distributions
-@reexport using Plots
-
 using LinearAlgebra: LinearAlgebra, I, norm
 using DifferentialEquations: DifferentialEquations, remake, solve
-using ModelingToolkit: ModelingToolkit, Num, Symbolics, arguments, operation
+using ModelingToolkit: ModelingToolkit, Num, Symbolics
 using Distributions: Distributions, InverseGamma, MvNormal, product_distribution
 using Plots: Plots, @layout, bar, plot, plot!, scatter!
 using Optimization: Optimization, OptimizationProblem
@@ -22,7 +16,7 @@ using SciMLExpectations: SciMLExpectations, ExpectationProblem, GenericDistribut
     HCubatureJL, Koopman, SystemMap
 using SciMLBase: SciMLBase, ContinuousCallback, EnsembleProblem, EnsembleSerial,
     EnsembleSolution, EnsembleThreads, ODESolution, terminate!
-using SciMLBase.EnsembleAnalysis
+using SymbolicUtils: SymbolicUtils
 
 include("basics.jl")
 include("datafit.jl")

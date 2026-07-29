@@ -3,7 +3,7 @@
 Load packages:
 
 ```@example scenario3
-using EasyModelAnalysis
+using DifferentialEquations, Distributions, EasyModelAnalysis, ModelingToolkit, Plots
 using AlgebraicPetri
 using UnPack
 ```
@@ -90,13 +90,7 @@ t = ModelingToolkit.get_iv(sys1)
 @unpack expo, conv, rec, hosp, death = sys1
 NN = 10.0
 @parameters u_expo=0.2*NN u_conv=0.2*NN u_rec=0.8*NN u_hosp=0.2*NN u_death=0.1*NN N=NN
-translate_params = [expo => u_expo / N,
-    conv => u_conv / N,
-    rec => u_rec / N,
-    hosp => u_hosp / N,
-    death => u_death / N]
-subed_sys = substitute(sys1, translate_params)
-sys = add_accumulations(subed_sys, [I])
+sys = complete(add_accumulations(sys1, [I]))
 @unpack accumulation_I = sys
 ```
 
@@ -112,7 +106,8 @@ u0init = [
 
 tend = 6 * 7
 ts = 0:tend
-prob = ODEProblem(sys, u0init, (0.0, tend))
+rates = [expo => 0.2, conv => 0.2, rec => 0.8, hosp => 0.2, death => 0.1]
+prob = ODEProblem(sys, u0init, (0.0, tend), rates)
 sol = solve(prob)
 plot(sol)
 ```
@@ -124,22 +119,22 @@ plot(sol)
 > Provide a forecast of cumulative Covid-19 cases and deaths over the 6-week period from May 1 – June 15, 2020 under no interventions, including 90% prediction intervals in your forecasts. Compare the accuracy of the forecasts with true data over the six-week timespan.
 
 ```@example scenario3
-get_uncertainty_forecast(prob, [accumulation_I], ts, [u_conv => Uniform(0.0, 1.0)], 6 * 7)
+get_uncertainty_forecast(prob, [accumulation_I], ts, [conv => Uniform(0.0, 1.0)], 6 * 7)
 ```
 
 ```@example scenario3
-plot_uncertainty_forecast(prob, [accumulation_I], ts, [u_conv => Uniform(0.0, 1.0)], 6 * 7)
+plot_uncertainty_forecast(prob, [accumulation_I], ts, [conv => Uniform(0.0, 1.0)], 6 * 7)
 ```
 
 ```@example scenario3
 get_uncertainty_forecast_quantiles(prob, [accumulation_I], ts,
-    [u_conv => Uniform(0.0, 1.0)],
+    [conv => Uniform(0.0, 1.0)],
     6 * 7)
 ```
 
 ```@example scenario3
 plot_uncertainty_forecast_quantiles(prob, [accumulation_I], ts,
-    [u_conv => Uniform(0.0, 1.0)],
+    [conv => Uniform(0.0, 1.0)],
     6 * 7)
 ```
 
@@ -149,7 +144,7 @@ plot_uncertainty_forecast_quantiles(prob, [accumulation_I], ts,
 
 ```@example scenario3
 _prob = remake(prob, tspan = (0.0, 6 * 7.0))
-prob_violating_threshold(_prob, [u_conv => Uniform(0.0, 1.0)], [accumulation_I > 0.4 * NN]) # TODO: explain 0.4*NN
+prob_violating_threshold(_prob, [conv => Uniform(0.0, 1.0)], [accumulation_I > 0.4 * NN]) # TODO: explain 0.4*NN
 ```
 
 ### Question 3
@@ -157,8 +152,8 @@ prob_violating_threshold(_prob, [u_conv => Uniform(0.0, 1.0)], [accumulation_I >
 > We are interested in determining how effective it would be to institute a mandatory mask mandate for the duration of the next six weeks. What is the probability of staying below 6000 cumulative deaths if we institute an indefinite mask mandate starting May 1, 2020?
 
 ```@example scenario3
-_prob = remake(_prob, p = [u_expo => 0.02])
-prob_violating_threshold(_prob, [u_conv => Uniform(0.0, 1.0)], [accumulation_I > 0.4 * NN])
+_prob = remake(_prob, p = [expo => 0.02])
+prob_violating_threshold(_prob, [conv => Uniform(0.0, 1.0)], [accumulation_I > 0.4 * NN])
 ```
 
 ### Question 4
@@ -177,7 +172,7 @@ eqs2 = [Differential(t)(S) ~ -(u_expo / N) * I * S
         Differential(t)(R) ~ (u_rec / N) * I + (u_rec / N) * H
         Differential(t)(H) ~ (u_hosp / N) * I - (u_death / N) * H - (u_rec / N) * H
         Differential(t)(D) ~ (u_death / N) * H + (u_death / N) * I]
-@named seirhd_detect = ODESystem(eqs2)
+@named seirhd_detect = ODESystem(eqs2, t)
 sys2 = add_accumulations(seirhd_detect, [I])
 u0init2 = [
     S => 0.9 * NN,
@@ -190,7 +185,9 @@ u0init2 = [
 sys2_ = structural_simplify(sys2)
 @unpack accumulation_I = sys2_
 
-probd = ODEProblem(sys2_, u0init2, (0.0, tend))
+rates2 = [u_expo => 0.2 * NN, u_conv => 0.2 * NN, u_rec => 0.8 * NN,
+    u_hosp => 0.2 * NN, u_death => 0.1 * NN, N => NN]
+probd = ODEProblem(sys2_, u0init2, (0.0, tend), rates2)
 sold = solve(probd; saveat = ts)
 plot(sold)
 ```

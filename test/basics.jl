@@ -1,4 +1,7 @@
 using EasyModelAnalysis, Test
+using DifferentialEquations
+using Distributions
+using ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as D
 
 @parameters σ ρ β
@@ -38,6 +41,12 @@ t_measure2 = [0.0, 1.0, 2.0, 200.0] # go past original tspan
 x_series = get_timeseries(prob, x, t_measure)
 @test sol(t_measure2; idxs = x).t[end] >= prob.tspan[2]
 @test sol(t_measure2; idxs = x).t[end] ≈ t_measure2[end]
+
+quantiles = get_uncertainty_forecast_quantiles(
+    prob, [x], t_measure, [σ => Uniform(27.0, 29.0)], 4
+)
+@test length(quantiles) == 2
+@test all(size(q) == (length(t_measure), 1) for q in quantiles)
 
 xmin, xminval = get_min_t(prob, x)
 @test sol(xmin; idxs = x) == xminval

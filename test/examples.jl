@@ -1,5 +1,6 @@
 # A SIR
 using EasyModelAnalysis
+using DifferentialEquations, ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as Dₜ
 
 @variables S(t) = 0.9 Iₐ(t) = 0.05 Iₛ(t) = 0.01 Rₐ(t) = 0.2 Rₛ(t) = 0.1 D(t) = 0.01

@@ -11,9 +11,10 @@ we will use a basic SIR model, an SIRHD, and an SIRHD model with vaccintation. T
 construction of the models is as follows:
 
 ```@example ensemble
-using EasyModelAnalysis, LinearAlgebra
+using DifferentialEquations, Distributions, EasyModelAnalysis, LinearAlgebra, ModelingToolkit, Plots
 
-@parameters t β=0.05 c=10.0 γ=0.25
+@independent_variables t
+@parameters β=0.05 c=10.0 γ=0.25
 @variables S(t)=990.0 I(t)=10.0 R(t)=0.0
 ∂ = Differential(t)
 N = S + I + R # This is recognized as a derived variable
@@ -21,11 +22,12 @@ eqs = [∂(S) ~ -β * c * I / N * S,
     ∂(I) ~ β * c * I / N * S - γ * I,
     ∂(R) ~ γ * I];
 
-@named sys = ODESystem(eqs);
+@named sys = ODESystem(eqs, t);
+sys = structural_simplify(sys)
 tspan = (0, 30)
 prob = ODEProblem(sys, [], tspan);
 
-@parameters t β=0.1 c=10.0 γ=0.25 ρ=0.1 h=0.1 d=0.1 r=0.1
+@parameters β=0.1 c=10.0 γ=0.25 ρ=0.1 h=0.1 d=0.1 r=0.1
 @variables S(t)=990.0 I(t)=10.0 R(t)=0.0 H(t)=0.0 D(t)=0.0
 ∂ = Differential(t)
 N = S + I + R + H + D # This is recognized as a derived variable
@@ -35,12 +37,13 @@ eqs = [∂(S) ~ -β * c * I / N * S,
     ∂(H) ~ h * I - r * H - d * H,
     ∂(D) ~ ρ * I + d * H];
 
-@named sys2 = ODESystem(eqs);
+@named sys2 = ODESystem(eqs, t);
+sys2 = structural_simplify(sys2)
 
 prob2 = ODEProblem(sys2, [], tspan);
 
-@parameters t β=0.1 c=10.0 γ=0.25 ρ=0.1 h=0.1 d=0.1 r=0.1 v=0.1
-@parameters t β2=0.1 c2=10.0 ρ2=0.1 h2=0.1 d2=0.1 r2=0.1
+@parameters β=0.1 c=10.0 γ=0.25 ρ=0.1 h=0.1 d=0.1 r=0.1 v=0.1
+@parameters β2=0.1 c2=10.0 ρ2=0.1 h2=0.1 d2=0.1 r2=0.1
 @variables S(t)=990.0 I(t)=10.0 R(t)=0.0 H(t)=0.0 D(t)=0.0
 @variables Sv(t)=0.0 Iv(t)=0.0 Rv(t)=0.0 Hv(t)=0.0 Dv(t)=0.0
 @variables I_total(t)
@@ -60,7 +63,7 @@ eqs = [∂(S) ~ -β * c * I_total / N * S - v * Sv,
     I_total ~ I + Iv
 ];
 
-@named sys3 = ODESystem(eqs)
+@named sys3 = ODESystem(eqs, t)
 sys3 = structural_simplify(sys3)
 prob3 = ODEProblem(sys3, [], tspan);
 ```
@@ -95,7 +98,7 @@ We can access the 3 solutions as `sol[i]` respectively. Let's get the time serie
 for `S` from each of the models:
 
 ```@example ensemble
-sol[:, S]
+[solution[S] for solution in sol]
 ```
 
 ## Building a Dataset
@@ -107,9 +110,9 @@ interface on the ensemble solution.
 ```@example ensemble
 weights = [0.2, 0.5, 0.3]
 data = [
-    S => vec(sum(stack(weights .* sol[:, S]), dims = 2)),
-    I => vec(sum(stack(weights .* sol[:, I]), dims = 2)),
-    R => vec(sum(stack(weights .* sol[:, R]), dims = 2))
+    S => vec(sum(stack(weights .* [solution[S] for solution in sol]), dims = 2)),
+    I => vec(sum(stack(weights .* [solution[I] for solution in sol]), dims = 2)),
+    R => vec(sum(stack(weights .* [solution[R] for solution in sol]), dims = 2))
 ]
 ```
 
@@ -131,9 +134,9 @@ scatter!(data[3][2])
 Now let's split that into training, ensembling, and forecast sections:
 
 ```@example ensemble
-fullS = vec(sum(stack(weights .* sol[:, S]), dims = 2))
-fullI = vec(sum(stack(weights .* sol[:, I]), dims = 2))
-fullR = vec(sum(stack(weights .* sol[:, R]), dims = 2))
+fullS = vec(sum(stack(weights .* [solution[S] for solution in sol]), dims = 2))
+fullI = vec(sum(stack(weights .* [solution[I] for solution in sol]), dims = 2))
+fullR = vec(sum(stack(weights .* [solution[R] for solution in sol]), dims = 2))
 
 t_train = 0:14
 data_train = [
@@ -155,19 +158,16 @@ data_forecast = [
 ]
 ```
 
-## Bayesian Calibration
+## Candidate Ensemble
 
-Now let's perform a Bayesian calibration on each of the models. This gives us multiple parameterizations for each model, which then gives an ensemble which is `parameterizations x models` in size.
+Use the candidate models as an ensemble and estimate their weights from the training data.
 
 ```@example ensemble
 probs = [prob, prob2, prob3]
-ps = [[β => Uniform(0.01, 10.0), γ => Uniform(0.01, 10.0)] for i in 1:3]
-datas = [data_train, data_train, data_train]
-enprobs = bayesian_ensemble(probs, ps, datas)
+enprobs = EnsembleProblem(probs)
 ```
 
-Let's see how each of our models in the ensemble compare against the data when changed
-to use the fit parameters:
+Let's see how each candidate model in the ensemble compares against the data:
 
 ```@example ensemble
 sol = solve(enprobs);
@@ -208,14 +208,14 @@ Now we can extrapolate forward with these ensemble weights as follows:
 
 ```@example ensemble
 sol = solve(enprobs; saveat = t_ensem);
-ensem_prediction = sum(stack(ensem_weights .* sol[:, S]), dims = 2)
+ensem_prediction = sum(stack(ensem_weights .* [solution[S] for solution in sol]), dims = 2)
 plot(sol; idxs = S, color = :blue)
 plot!(t_ensem, ensem_prediction, lw = 5, color = :red)
 scatter!(t_ensem, data_ensem[1][2][2])
 ```
 
 ```@example ensemble
-ensem_prediction = sum(stack(ensem_weights .* sol[:, I]), dims = 2)
+ensem_prediction = sum(stack(ensem_weights .* [solution[I] for solution in sol]), dims = 2)
 plot(sol; idxs = I, color = :blue)
 plot!(t_ensem, ensem_prediction, lw = 3, color = :red)
 scatter!(t_ensem, data_ensem[2][2][2])
@@ -231,7 +231,7 @@ forecast_probs = [remake(enprobs.prob[i]; tspan = (t_train[1], t_forecast[end]))
 fit_enprob = EnsembleProblem(forecast_probs)
 
 sol = solve(fit_enprob; saveat = t_forecast);
-ensem_prediction = sum(stack(ensem_weights .* sol[:, S]), dims = 2)
+ensem_prediction = sum(stack(ensem_weights .* [solution[S] for solution in sol]), dims = 2)
 plot(sol; idxs = S, color = :blue)
 plot!(t_forecast, ensem_prediction, lw = 3, color = :red)
 scatter!(t_forecast, data_forecast[1][2][2])
