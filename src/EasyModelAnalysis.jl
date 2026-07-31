@@ -22,8 +22,9 @@ using OptimizationNLopt: OptimizationNLopt
 using GlobalSensitivity: GlobalSensitivity, Sobol
 using NLopt: NLopt, Opt, inequality_constraint!
 using Turing: Turing, @varname
+using Integrals: Integrals, HCubatureJL
 using SciMLExpectations: SciMLExpectations, ExpectationProblem, GenericDistribution,
-    HCubatureJL, Koopman, SystemMap
+    Koopman, SystemMap
 using SciMLBase: SciMLBase, ContinuousCallback, EnsembleProblem, EnsembleSerial,
     EnsembleSolution, EnsembleThreads, ODESolution, terminate!
 using SymbolicUtils: SymbolicUtils
