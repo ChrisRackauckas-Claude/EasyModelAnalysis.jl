@@ -3,10 +3,11 @@
 ## Generate the Model and Dataset
 
 ```@example scenario2
-using EasyModelAnalysis, Optimization, OptimizationMOI, NLopt, Plots, Random
+using DifferentialEquations, Distributions, EasyModelAnalysis, ModelingToolkit, NLopt,
+    Optimization, OptimizationMOI, Plots, Random, SciMLBase, Statistics
 Random.seed!(12345)
 
-@variables t
+@independent_variables t
 Dₜ = Differential(t)
 @variables S(t)=0.97 E(t)=0.02 I(t)=0.01 R(t)=0.0 H(t)=0.0 D(t)=0.0
 @variables T(t)=10000.0 η(t)=0.0 cumulative_I(t)=0.0
@@ -20,7 +21,7 @@ eqs = [T ~ S + E + I + R + H + D
        Dₜ(R) ~ γ₁ * I + γ₂ * H
        Dₜ(H) ~ δ * I - (μ + γ₂) * H
        Dₜ(D) ~ μ * H];
-@named seirhd = ODESystem(eqs)
+@named seirhd = ODESystem(eqs, t)
 seirhd = structural_simplify(seirhd)
 prob = ODEProblem(seirhd, [], (0.0, 60.0), saveat = 1.0)
 sol = solve(prob)
@@ -30,18 +31,15 @@ plot(sol)
 
 ## Model Analysis
 
-> Parameterize model either using data from the previous two months (October 28th – December 28th, 2021), or with relevant parameter values from the literature.
+> Calibrate the model to data from the previous two months (October 28th – December 28th, 2021), starting from relevant parameter values from the literature.
 
 ```@example scenario2
 data = [I => sol[I], R => sol[R], H => sol[H], D => sol[D]]
 prior_mean = [0.06, 0.015, 0.005, 0.003, 0.007, 0.001, 0.2, 0.04]
 prior_sd = [0.006, 0.0015, 0.0005, 0.0003, 0.0007, 0.0001, 0.02, 0.004]
 p = [β₁, β₂, β₃, α, γ₁, γ₂, δ, μ]
-p_priors = Pair.(p,
-    Truncated.(Normal.(prior_mean, prior_sd), prior_mean - 3 * prior_sd,
-        prior_mean + 3 * prior_sd))
 tsave = collect(0.0:1.0:60.0)
-fit = bayesian_datafit(prob, p_priors, tsave, data, noise_prior = InverseGamma(10, 0.1))
+fit = datafit(prob, Pair.(p, prior_mean), tsave, data)
 ```
 
 ### Question 1
@@ -49,8 +47,7 @@ fit = bayesian_datafit(prob, p_priors, tsave, data, noise_prior = InverseGamma(1
 > Forecast Covid cases and hospitalizations over the next 3 months under no interventions.
 
 ```@example scenario2
-prob = remake(prob; u0 = u60,
-    p = Pair.(getfield.(fit, :first), mean.(getfield.(fit, :second))))
+prob = remake(prob; u0 = u60, p = fit)
 forecast_threemonths = solve(prob, tspan = (0.0, 90.0), saveat = 1.0)
 plot(forecast_threemonths)
 ```
@@ -64,12 +61,13 @@ need_intervention = maximum(forecast_threemonths[H]) > 0.05
 ```
 
 ```@example scenario2
-post_mean = mean.(getfield.(fit, :second))
-post_sd = sqrt.(var.(getfield.(fit, :second)))
-trunc_min = post_mean .- 3 * post_sd
-trunc_max = post_mean .+ 3 * post_sd
-post_trunc = Truncated.(Normal.(post_mean, post_sd), trunc_min, trunc_max)
-posterior = Pair.(getfield.(fit, :first), post_trunc)
+fitted_transmission = first(fit)
+transmission_sd = max(abs(fitted_transmission.second) * 0.05, 1.0e-6)
+posterior = [
+    fitted_transmission.first => Truncated(
+        Normal(fitted_transmission.second, transmission_sd), 0.0, Inf
+    )
+]
 prob_violating_threshold(prob, posterior, [H > 0.05])
 ```
 

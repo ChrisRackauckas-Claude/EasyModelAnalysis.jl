@@ -10,3 +10,7 @@ ispcs = "ispcs"
 eqs = "eqs"
 rhs = "rhs"
 MTK = "MTK"
+# Color-type names reexported from Plots (via ColorTypes.jl/Colors.jl):
+# ADIN99/ADIN99d/ADIN99o (alpha DIN99 colorspaces) and HSI (hue-saturation-intensity).
+ADIN = "ADIN"
+HSI = "HSI"

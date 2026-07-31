@@ -28,23 +28,32 @@ function _get_sensitivity(prob, t, x, pbounds; samples)
 end
 
 """
-    get_sensitivity(prob, t, x, pbounds)
+    get_sensitivity(prob, t, x, pbounds; samples = 1000) -> Dict{Symbol, Float64}
 
-Returns the [Sobol Indices](https://en.wikipedia.org/wiki/Variance-based_sensitivity_analysis) that quantify the uncertainty of the solution at time `t` and observation `x` to the parameters in `pbounds`.
+Return [Sobol indices](https://en.wikipedia.org/wiki/Variance-based_sensitivity_analysis)
+that quantify how parameter bounds in `pbounds` affect observation `x` at time `t`.
 
-## Arguments
+# Arguments
 
-  - `t`: The time of observation, the solution is stored at this time to obtain the relevant observed variable.
+  - `prob`: a SciML problem to solve for each sampled parameter vector.
+  - `t`: time of observation; each solution is saved at this time to obtain `x`.
   - `x`: The observation symbolic expression or a function that acts on the solution object.
-  - `pbounds`: An array with the bounds for each parameter, passed as a pair of parameter expression and a vector with the upper and lower bound.
+  - `pbounds`: parameter-expression-to-`[lower, upper]` bound pairs.
 
-## Keyword Arguments
+# Keywords
 
-  - `samples`: Number of samples for running the global sensitivity analysis.
+  - `samples::Integer = 1000`: number of Sobol samples.
 
 # Returns
 
-  - A dictionary with the first, second and total order indices for all parameters (and pairs in case of second order).
+  - A dictionary containing first-, second-, and total-order indices keyed by parameter
+    name.
+
+# Examples
+
+```julia
+indices = get_sensitivity(prob, 10.0, x, [k => [0.8, 1.2]]; samples = 1_000)
+```
 """
 function get_sensitivity(prob, t, x, pbounds; samples = 1000)
     sensres = _get_sensitivity(prob, t, x, pbounds; samples)
@@ -69,35 +78,62 @@ end
 """
     get_sensitivity_of_maximum(prob, t, x, pbounds; samples = 1000)
 
-Returns the [Sobol Indices](https://en.wikipedia.org/wiki/Variance-based_sensitivity_analysis) that
-quantify the uncertainty of the solution at time `t` and maximum of observation `x` to the
-parameters in `pbounds`.
+Return Sobol indices for the maximum value of `x` over each sampled solution.
 
-## Arguments
+# Arguments
 
-  - `t`: The time of observation, the solution is stored at this time to obtain the relevant observed variable.
-  - `x`: The observation symbolic expression.
-  - `pbounds`: An array with the bounds for each parameter, passed as a pair of parameter expression and a vector with the upper and lower bound.
+  - `prob`: a SciML problem to solve for each sampled parameter vector.
+  - `t`: saved time(s) used when solving each sampled problem.
+  - `x`: the symbolic observation whose maximum is analyzed.
+  - `pbounds`: parameter-to-`[lower, upper]` bound pairs.
 
-## Keyword Arguments
+# Keywords
 
-  - `samples`: Number of samples for running the global sensitivity analysis.
+  - `samples::Integer = 1000`: number of Sobol samples.
 
 # Returns
 
-  - A dictionary with the first, second and total order indices for all parameters (and pairs incase of second order).
+  - A dictionary containing first-, second-, and total-order indices keyed by parameter
+    name.
+
+# Examples
+
+```julia
+indices = get_sensitivity_of_maximum(prob, 0.0:0.1:10.0, x, [k => [0.8, 1.2]])
+```
 """
 function get_sensitivity_of_maximum(prob, t, x, pbounds; samples = 1000)
     return get_sensitivity(prob, t, sol -> get_max_t(sol, x)[2], pbounds, samples = samples)
 end
 
 """
-    create_sensitivity_plot(prob, t, x, pbounds)
+    create_sensitivity_plot(prob, t, x, pbounds; samples = 1000) -> Plots.Plot
 
-Creates bar plots of the first, second and total order Sobol indices that quantify sensitivity of the solution
-at time `t` and state `x` to the parameters in `pbounds`.
+Create bar plots of first-, second-, and total-order Sobol indices for the solution at time
+`t` and state `x`.
 
-See also [`get_sensitivity`](@ref)
+# Arguments
+
+  - `prob`: a SciML problem to solve for each sampled parameter vector.
+  - `t`: saved time(s) used when solving each sampled problem.
+  - `x`: the symbolic observation to analyze.
+  - `pbounds`: parameter-to-`[lower, upper]` bound pairs.
+
+# Keywords
+
+  - `samples::Integer = 1000`: number of Sobol samples.
+
+# Returns
+
+  - A three-panel plot of total-, first-, and second-order Sobol indices.
+
+# Examples
+
+```julia
+p = create_sensitivity_plot(prob, 10.0, x, [k => [0.8, 1.2]])
+```
+
+See also [`get_sensitivity`](@ref).
 """
 function create_sensitivity_plot(prob, t, x, pbounds; samples = 1000)
     sensres = _get_sensitivity(prob, t, x, pbounds; samples)
@@ -126,12 +162,32 @@ function create_sensitivity_plot(prob, t, x, pbounds; samples = 1000)
 end
 
 """
-    create_sensitivity_plot(sensres, pbounds, total_only = false; kw...)
+    create_sensitivity_plot(sensres, pbounds, total_only = false; kw...) -> Plots.Plot
 
 Creates bar plots of the first, second and total order Sobol indices from the
 result of `get_sensitivity` and `pbounds`.
 
-See also [`get_sensitivity`](@ref)
+# Arguments
+
+  - `sensres::Dict{Symbol}`: result returned by [`get_sensitivity`](@ref).
+  - `pbounds`: parameter-to-`[lower, upper]` bound pairs used for `sensres`.
+  - `total_only::Bool = false`: return only total-order indices when `true`.
+
+# Keywords
+
+  - `kw...`: keyword arguments forwarded to the bar plots.
+
+# Returns
+
+  - A total-order bar plot, or a three-panel Sobol-index plot.
+
+# Examples
+
+```julia
+p = create_sensitivity_plot(indices, [k => [0.8, 1.2]]; total_only = true)
+```
+
+See also [`get_sensitivity`](@ref).
 """
 function create_sensitivity_plot(sensres::Dict{Symbol}, pbounds, total_only = false; kw...)
     paramnames = String.(Symbol.(getfield.(pbounds, :first)))

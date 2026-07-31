@@ -3,8 +3,8 @@
 First, let's implement the classic SEIRHD epidemic model with ModelingToolkit:
 
 ```@example seirhd
-using EasyModelAnalysis
-@variables t
+using DifferentialEquations, Distributions, EasyModelAnalysis, ModelingToolkit, Plots
+@independent_variables t
 Dₜ = Differential(t)
 @variables S(t)=0.9 E(t)=0.05 I(t)=0.01 R(t)=0.2 H(t)=0.1 D(t)=0.01
 @variables T(t)=0.0 η(t)=0.0 cumulative_I(t)=0.0

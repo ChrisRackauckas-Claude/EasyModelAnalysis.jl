@@ -1,4 +1,5 @@
 using EasyModelAnalysis, Test
+using DifferentialEquations, ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as D
 
 @parameters σ ρ β
@@ -30,7 +31,7 @@ prob = ODEProblem(sys, u0, tspan, p, jac = true)
 sol = solve(prob)
 
 pbounds = [ρ => [0.0, 20.0], β => [0.0, 100.0]]
-sensres = get_sensitivity(prob, 100.0, y, pbounds)
+sensres = EasyModelAnalysis.get_sensitivity(prob, 100.0, y, pbounds)
 @test_nowarn create_sensitivity_plot(sensres, pbounds)
 
 @test length(sensres) == 5

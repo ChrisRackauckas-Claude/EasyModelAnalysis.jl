@@ -2,7 +2,7 @@
 
 ```@example carcione
 cd(@__DIR__)
-using SBMLToolkit, ModelingToolkit, EasyModelAnalysis, UnPack
+using DifferentialEquations, EasyModelAnalysis, ModelingToolkit, Plots, SBMLToolkit, UnPack
 
 xmlfile = "../assets/Carcione2020.xml"
 

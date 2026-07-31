@@ -1,4 +1,5 @@
 using EasyModelAnalysis, Test
+using DifferentialEquations, Distributions, ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as D
 
 @parameters σ ρ β
@@ -36,6 +37,18 @@ eqs = [D(x) ~ x]
 prob = ODEProblem(sys, [x => 0.01], (0.0, Inf))
 sol = stop_at_threshold(prob, x^2, 0.1)
 @test sol.u[end][1]^2 ≈ 0.1 atol = 1.0e-5
+
+# A wrapped `Num` inequality must be accepted by the public probability API.
+@parameters threshold_rate
+@variables threshold_state(t)
+eqs = [D(threshold_state) ~ threshold_rate * threshold_state]
+@mtkbuild threshold_system = ODESystem(eqs, t)
+threshold_prob = ODEProblem(
+    threshold_system, [threshold_state => 0.01], (0.0, 1.0), [threshold_rate => 1.0]
+)
+@test 0.0 <= prob_violating_threshold(
+        threshold_prob, [threshold_rate => Uniform(0.9, 1.1)], [threshold_state > 0.01]
+    ) <= 1.0
 
 # Intervention
 @variables x(t)

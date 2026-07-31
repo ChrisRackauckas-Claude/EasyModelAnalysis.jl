@@ -1,7 +1,10 @@
 """
-    optimal_threshold_intervention(prob, [p1 = prob.p], p2, obs, threshold, duration; maxtime)
+    optimal_threshold_intervention(prob, p2, obs, threshold, duration; maxtime = 60, kw...)
+    optimal_threshold_intervention(
+        prob, p1, p2, obs, threshold, duration; maxtime = 60, kw...
+    )
 
-## Arguments
+# Arguments
 
   - `p1`: parameters for the pre-intervention scenario. Defaults to `prob.p`.
   - `p2`: parameters for the pose-intervention scenario.
@@ -9,15 +12,22 @@
   - `threshold`: The threshold for the observation.
   - `duration`: Duration for the evaluation of intervention.
 
-## Keyword Arguments
+# Keywords
 
   - `maxtime`: Maximum optimization time. Defaults to `60`.
+  - `kw...`: keyword arguments forwarded to the component solves.
 
 # Returns
 
   - `opt_tspan`: Optimal intervention time span.
   - `(s1, s2, s3)`: Pre-intervention, intervention, post-intervention solutions.
   - `ret`: Return code from the optimization.
+
+# Examples
+
+```julia
+times, solutions, retcode = optimal_threshold_intervention(prob, [k => 0.8], x, 10.0, 20.0)
+```
 """
 function optimal_threshold_intervention(prob, p2, obs, threshold, duration; kw...)
     p1 = prob.p
@@ -80,10 +90,12 @@ function optimal_threshold_intervention(
 end
 
 """
-    optimal_parameter_intervention_for_threshold(prob, obs, threshold, cost, ps,
-        lb, ub, intervention_tspan, duration; ineq_cons = nothing, maxtime=60)
+    optimal_parameter_intervention_for_threshold(
+        prob, obs, threshold, cost, ps,
+        lb, ub, intervention_tspan, duration; ineq_cons = nothing, maxtime = 60, kw...
+    )
 
-## Arguments
+# Arguments
 
   - `prob`: An ODEProblem.
   - `obs`: The observation symbolic expression.
@@ -92,20 +104,31 @@ end
   - `ps`: the parameters that appear in the cost, e.g. `[α, β]`.
   - `lb`: the lower bounds of the parameters e.g. `[-10, -5]`.
   - `ub`: the upper bounds of the parameters e.g. `[5, 10]`.
-  - `intervention_tspan`: intervention time span, e.g. `(20.0, 30.0)`. Defaults to `prob.tspan`.
-  - `duration`: Duration for the evaluation of intervention. Defaults to `prob.tspan[2] - prob.tspan[1]`.
+  - `intervention_tspan`: intervention time span, e.g. `(20.0, 30.0)`. Defaults to
+    `prob.tspan`.
+  - `duration`: duration for the evaluation of intervention. Defaults to
+    `prob.tspan[2] - prob.tspan[1]`.
 
-## Keyword Arguments
+# Keywords
 
   - `maxtime`: Maximum optimization time. Defaults to `60`.
   - `ineq_cons`: a vector of symbolic expressions in terms of symbolic
     parameters. The optimizer will enforce `ineq_cons .< 0`.
+  - `kw...`: keyword arguments forwarded to the component solves.
 
 # Returns
 
   - `opt_p`: Optimal intervention parameters.
   - `(s1, s2, s3)`: Pre-intervention, intervention, post-intervention solutions.
   - `ret`: Return code from the optimization.
+
+# Examples
+
+```julia
+parameters, solutions, retcode = optimal_parameter_intervention_for_threshold(
+    prob, x, 10.0, k, [k], [0.5], [1.5]
+)
+```
 """
 function optimal_parameter_intervention_for_threshold(
         prob, obs, threshold,
@@ -117,7 +140,7 @@ function optimal_parameter_intervention_for_threshold(
     )
     t0 = prob.tspan[1]
     ti_start, ti_end = intervention_tspan
-    symbolic_cost = Symbolics.unwrap(symbolic_cost)
+    symbolic_cost = SymbolicUtils.unwrap(symbolic_cost)
     #ps = collect(ModelingToolkit.vars(symbolic_cost))
     _cost = Symbolics.build_function(symbolic_cost, ps, expression = Val{false})
 
@@ -168,7 +191,7 @@ function optimal_parameter_intervention_for_threshold(
     if ineq_cons !== nothing
         for con in ineq_cons
             _con = Symbolics.build_function(
-                Symbolics.unwrap(con), ps,
+                SymbolicUtils.unwrap(con), ps,
                 expression = Val{false}
             )
             _con(init_x)
@@ -183,14 +206,17 @@ function optimal_parameter_intervention_for_threshold(
 end
 
 """
-    optimal_parameter_intervention_for_reach(prob, obs, reach, cost, ps,
-        lb, ub, intervention_tspan, duration; ineq_cons = nothing, maxtime=60)
+    optimal_parameter_intervention_for_reach(
+        prob, obs, reach, cost, ps,
+        lb, ub, intervention_tspan, duration; ineq_cons = nothing, maxtime = 60, kw...
+    )
 
-## Arguments
+# Arguments
 
   - `prob`: An ODEProblem.
   - `obs`: The observation symbolic expression.
-  - `reach`: The reach for the observation, i.e., the constraint enforces that `obs` reaches `reach`.
+  - `reach`: the reach for the observation; the constraint enforces that `obs` reaches
+    `reach`.
   - `cost`: the cost function for minimization, e.g. `α + 20 * β`. It could be a
     tuple where the first argument is a symbol object in terms of parameters, and
     the second entry of the tuple could be an arbitrary function that takes a
@@ -198,20 +224,31 @@ end
   - `ps`: the parameters that appear in the cost, e.g. `[α, β]`.
   - `lb`: the lower bounds of the parameters e.g. `[-10, -5]`.
   - `ub`: the upper bounds of the parameters e.g. `[5, 10]`.
-  - `intervention_tspan`: intervention time span, e.g. `(20.0, 30.0)`. Defaults to `prob.tspan`.
-  - `duration`: Duration for the evaluation of intervention. Defaults to `prob.tspan[2] - prob.tspan[1]`.
+  - `intervention_tspan`: intervention time span, e.g. `(20.0, 30.0)`. Defaults to
+    `prob.tspan`.
+  - `duration`: duration for the evaluation of intervention. Defaults to
+    `prob.tspan[2] - prob.tspan[1]`.
 
-## Keyword Arguments
+# Keywords
 
   - `maxtime`: Maximum optimization time. Defaults to `60`.
   - `ineq_cons`: a vector of symbolic expressions in terms of symbolic
     parameters. The optimizer will enforce `ineq_cons .< 0`.
+  - `kw...`: keyword arguments forwarded to the component solves.
 
 # Returns
 
   - `opt_p`: Optimal intervention parameters.
   - `(s1, s2, s3)`: Pre-intervention, intervention, post-intervention solutions.
   - `ret`: Return code from the optimization.
+
+# Examples
+
+```julia
+parameters, solutions, retcode = optimal_parameter_intervention_for_reach(
+    prob, x, 10.0, k, [k], [0.5], [1.5]
+)
+```
 """
 function optimal_parameter_intervention_for_reach(
         prob, obs, reach,
@@ -228,7 +265,7 @@ function optimal_parameter_intervention_for_reach(
     else
         cost_sol = nothing
     end
-    symbolic_cost = Symbolics.unwrap(symbolic_cost)
+    symbolic_cost = SymbolicUtils.unwrap(symbolic_cost)
     #ps = collect(ModelingToolkit.vars(symbolic_cost))
     _cost = Symbolics.build_function(symbolic_cost, ps, expression = Val{false})
 
@@ -310,7 +347,7 @@ function optimal_parameter_intervention_for_reach(
     if ineq_cons !== nothing
         for con in ineq_cons
             _con = Symbolics.build_function(
-                Symbolics.unwrap(con), ps,
+                SymbolicUtils.unwrap(con), ps,
                 expression = Val{false}
             )
             _con(init_x)
