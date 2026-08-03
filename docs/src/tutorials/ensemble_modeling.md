@@ -226,8 +226,8 @@ scatter!(t_ensem, data_ensem[2][2][2])
 Once we have obtained the ensemble model, we can forecast ahead with it:
 
 ```@example ensemble
-forecast_probs = [remake(enprobs.prob[i]; tspan = (t_train[1], t_forecast[end]))
-                  for i in 1:length(enprobs.prob)]
+forecast_probs = [remake(problem; tspan = (t_train[1], t_forecast[end]))
+                  for problem in probs]
 fit_enprob = EnsembleProblem(forecast_probs)
 
 sol = solve(fit_enprob; saveat = t_forecast);
