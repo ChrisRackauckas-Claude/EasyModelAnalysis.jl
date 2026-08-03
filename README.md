@@ -24,7 +24,7 @@ which contains the unreleased features.
 ## Quick Demonstration
 
 ```julia
-using EasyModelAnalysis
+using DifferentialEquations, EasyModelAnalysis, ModelingToolkit, Plots
 
 @parameters t σ ρ β
 @variables x(t) y(t) z(t)

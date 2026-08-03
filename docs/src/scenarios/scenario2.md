@@ -96,7 +96,7 @@ function g(res, ts, p = nothing)
     prob = ODEProblem(opttime_sys, [], [0.0, 90.0])
     prob = remake(prob; u0 = u60)
     sol = solve(prob, saveat = 0.0:1.0:90.0, tstops = [tstart, tstop])
-    hospitalizations = sol(0.0:1.0:90.0, idxs = H)
+    hospitalizations = vec(sol(0.0:1.0:90.0, idxs = H))
     if SciMLBase.successful_retcode(sol.retcode)
         res .= vcat(hospitalizations, tstop - tstart)
     else
