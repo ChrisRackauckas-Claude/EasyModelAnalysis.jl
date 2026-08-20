@@ -5,6 +5,7 @@ using DifferentialEquations: DifferentialEquations, remake, solve
 using ModelingToolkit: ModelingToolkit, Num, Symbolics
 using Distributions: Distributions, InverseGamma, MvNormal, product_distribution
 using Plots: Plots, @layout, bar, plot, plot!, scatter!
+using PrecompileTools: @compile_workload, @setup_workload
 using Optimization: Optimization, OptimizationProblem
 using OptimizationBBO: OptimizationBBO, BBO_adaptive_de_rand_1_bin_radiuslimited
 using OptimizationNLopt: OptimizationNLopt
@@ -36,5 +37,16 @@ export optimal_threshold_intervention, prob_violating_threshold,
     optimal_parameter_intervention_for_threshold, optimal_parameter_threshold,
     optimal_parameter_intervention_for_reach
 export bayesian_ensemble, ensemble_weights
+
+@setup_workload begin
+    @compile_workload begin
+        ModelingToolkit.@independent_variables t
+        ModelingToolkit.@variables x(t)
+        D = ModelingToolkit.Differential(t)
+        ModelingToolkit.@mtkcompile sys = ModelingToolkit.System([D(x) ~ -x], t)
+        prob = DifferentialEquations.ODEProblem(sys, Dict(x => 1.0), (0.0, 1.0))
+        get_timeseries(prob, x, [0.0, 0.5, 1.0])
+    end
+end
 
 end
