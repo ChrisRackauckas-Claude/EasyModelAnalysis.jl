@@ -45,16 +45,12 @@ makedocs(
             "tutorials/ensemble_modeling.md",
         ],
         "Examples" => [
-            "examples/petri.md",
             "examples/ASIR.md",
             "examples/SEIRHD.md",
             "examples/Carcione2020.md",
         ],
         "Scenarios" => [
-            "scenarios/scenario1.md",
             "scenarios/scenario2.md",
-            "scenarios/scenario3.md",
-            "scenarios/scenario4.md",
             "scenarios/scenario5.md",
         ],
         "API" => [
