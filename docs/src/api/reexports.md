@@ -123,7 +123,7 @@ their results.
     `cquantile`, `insupport`, `support`
   - Statistics: `mean`, `median`, `mode`, `modes`, `var`, `std`, `cov`, `cor`,
     `skewness`, `kurtosis`, `entropy`, `kldivergence`, `loglikelihood`
-  - Parameters: `params`, `partype`, `location`, `scale`, `shape`, `rate`, `probs`,
+  - Parameters: `params`, `partype`, `location`, `scale`, `rate`, `probs`,
     `ncategories`, `ntrials`, `succprob`, `failprob`
   - Fitting and sampling: `fit`, `fit_mle`, `sampler`
   - The `Distributions` module itself, for qualified access

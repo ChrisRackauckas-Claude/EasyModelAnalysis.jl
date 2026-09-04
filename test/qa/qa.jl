@@ -55,7 +55,7 @@ const REEXPORTS = (
     :RODEProblem, :RODESolution, :Rosenbrock23, :Sampleable, :sampler, :SampleTime,
     :savefig, :savevalues!, :scale, :scatter, :scatter!, :scatter3d, :scatter3d!,
     :SciMLBase, :SDEFunction, :SDEProblem, :SDESystem, :SecondOrderODEProblem,
-    Symbol("@series"), :set_proposed_dt!, :Shape, :shape, :Shift, :ShiftIndex, :showtheme,
+    Symbol("@series"), :set_proposed_dt!, :Shape, :Shift, :ShiftIndex, :showtheme,
     :simplify, :skewness, :SkewNormal, :solve, :solve!, :SplitFunction, :SplitODEProblem,
     :spy, :spy!, :std, :SteadyStateProblem, :SteadyStateSolution, :step!, :stephist,
     :stephist!, :sticks, :sticks!, :Stream, :stroke, :structural_simplify, :substitute,

@@ -100,7 +100,7 @@ export Arcsine, Bernoulli, Beta, Binomial, Categorical, Cauchy, ccdf, cdf, censo
     MixtureModel, mode, modes, Multinomial, Multivariate, MultivariateDistribution,
     MvLogNormal, MvNormal, ncategories, NegativeBinomial, Normal, ntrials, params, Pareto,
     partype, pdf, Poisson, probs, Product, product_distribution, quantile, rate, Rayleigh,
-    Sampleable, sampler, scale, shape, skewness, SkewNormal, std, succprob, support, TDist,
+    Sampleable, sampler, scale, skewness, SkewNormal, std, succprob, support, TDist,
     Truncated, truncated, Uniform, Univariate, UnivariateDistribution, var, Weibull, Wishart
 
 # Reexported Plots API: the plotting verbs and attribute helpers the analysis plots and
