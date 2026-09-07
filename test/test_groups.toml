@@ -3,6 +3,12 @@ versions = ["1"]
 num_threads = 4
 timeout = 240
 
+["Core 32-bit"]
+group = "Core"
+versions = ["1"]
+os = ["ubuntu-latest"]
+arch = "x86"
+
 [Datafit]
 versions = ["1"]
 num_threads = 4
