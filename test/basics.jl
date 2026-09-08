@@ -48,6 +48,17 @@ quantiles = get_uncertainty_forecast_quantiles(
 @test length(quantiles) == 2
 @test all(size(q) == (length(t_measure), 1) for q in quantiles)
 
+@testset "Uncertainty forecast trajectories" begin
+    for (symbols, initial_values) in ((x, [1.0]), ([x], [1.0]), ([x, y], [1.0, 0.0]))
+        forecasts = get_uncertainty_forecast(
+            prob, symbols, t_measure, [σ => Uniform(27.0, 29.0)], 4
+        )
+        @test length(forecasts) == 4
+        @test all(size(forecast) == (length(initial_values), length(t_measure)) for forecast in forecasts)
+        @test all(forecast[:, 1] == initial_values for forecast in forecasts)
+    end
+end
+
 xmin, xminval = get_min_t(prob, x)
 @test sol(xmin; idxs = x) == xminval
 @test sol(xmin; idxs = x) <= minimum(sol[x])
