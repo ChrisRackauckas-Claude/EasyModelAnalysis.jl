@@ -46,9 +46,14 @@ julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+MonteCarloIntegration = "4886b29c-78c9-11e9-0a6e-41e1f4161f7b"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 SciMLTesting = "09d9d899-5365-40a9-917a-5f67fddea283"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "SafeTestsets", "SciMLTesting", "Test"]
+test = ["Aqua", "MonteCarloIntegration", "SafeTestsets", "SciMLTesting", "Test"]
+
+[sources]
+Integrals = {url = "https://github.com/SciML/Integrals.jl.git", rev = "master"}
+MonteCarloIntegration = {url = "https://github.com/ranjanan/MonteCarloIntegration.jl.git", rev = "master"}
