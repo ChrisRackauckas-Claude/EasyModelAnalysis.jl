@@ -13,7 +13,7 @@ mdl = readSBML(xmlfile, doc -> begin
 end)
 
 rs = ReactionSystem(mdl)  # If you want to create a reaction system
-odesys = convert(ODESystem, rs)  # Alternatively: ODESystem(mdl)
+odesys = ODESystem(mdl)
 ```
 
 ```@example carcione
@@ -25,7 +25,7 @@ sys = structural_simplify(odesys)
 @unpack alpha, epsilon, gamma, mu, beta, City = sys
 tspan = (0.0, 1.0)
 prob = ODEProblem(sys, [], tspan, [])
-sol = solve(prob, Rodas5())
+sol = solve(prob, Rodas5P())
 plot(sol, idxs = Deceased)
 ```
 
