@@ -199,7 +199,7 @@ function get_uncertainty_forecast(prob, sym, t, uncertainp, samples)
     prob_func(prob, ctx) = sample_prob(prob)
     eprob = EnsembleProblem(prob, prob_func = prob_func)
     esol = solve(eprob, nothing, EnsembleSerial(), saveat = t, trajectories = samples)
-    return Array.(reduce.(hcat, [esol[i][sym] for i in 1:samples]))
+    return Array.(reduce.(hcat, [esol.u[i][sym] for i in 1:samples]))
 end
 
 """
