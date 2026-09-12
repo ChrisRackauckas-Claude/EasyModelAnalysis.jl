@@ -4,10 +4,12 @@ First, let's implement the classic SEIRHD epidemic model with ModelingToolkit:
 
 ```@example seirhd
 using DifferentialEquations, Distributions, EasyModelAnalysis, ModelingToolkit, Plots
+using SciMLBase: successful_retcode
 @independent_variables t
 Dₜ = Differential(t)
 @variables S(t)=0.9 E(t)=0.05 I(t)=0.01 R(t)=0.2 H(t)=0.1 D(t)=0.01
-@variables T(t)=0.0 η(t)=0.0 cumulative_I(t)=0.0
+@variables T(t) η(t)
+@variables cumulative_I(t)=0.0
 @parameters β₁=0.6 β₂=0.143 β₃=0.055 α=0.003 γ₁=0.007 γ₂=0.011 δ=0.1 μ=0.14
 eqs = [T ~ S + E + I + R + H + D
        η ~ (β₁ * E + β₂ * I + β₃ * H) / T
@@ -22,6 +24,10 @@ eqs = [T ~ S + E + I + R + H + D
 seirhd = structural_simplify(seirhd)
 prob = ODEProblem(seirhd, [], (0, 110.0))
 sol = solve(prob)
+@assert successful_retcode(sol)
+@assert [sol[state][1] for state in [S, E, I, R, H, D, cumulative_I]] ==
+    [0.9, 0.05, 0.01, 0.2, 0.1, 0.01, 0.0]
+@assert all(isfinite, Array(sol))
 plot(sol)
 ```
 
