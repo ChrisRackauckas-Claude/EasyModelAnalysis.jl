@@ -10,7 +10,7 @@ Random.seed!(12345)
 @independent_variables t
 Dₜ = Differential(t)
 @variables S(t)=0.97 E(t)=0.02 I(t)=0.01 R(t)=0.0 H(t)=0.0 D(t)=0.0
-@variables T(t)=10000.0 η(t)=0.0 cumulative_I(t)=0.0
+@variables T(t) η(t) cumulative_I(t)=0.0
 @parameters β₁=0.06 β₂=0.015 β₃=0.005 α=0.003 γ₁=0.007 γ₂=0.001 δ=0.2 μ=0.04
 eqs = [T ~ S + E + I + R + H + D
        η ~ (β₁ * E + β₂ * I + β₃ * H)
@@ -25,6 +25,7 @@ eqs = [T ~ S + E + I + R + H + D
 seirhd = structural_simplify(seirhd)
 prob = ODEProblem(seirhd, [], (0.0, 60.0), saveat = 1.0)
 sol = solve(prob)
+@assert SciMLBase.successful_retcode(sol)
 u60 = sol[:, end]
 plot(sol)
 ```
