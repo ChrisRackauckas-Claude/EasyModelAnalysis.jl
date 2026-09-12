@@ -11,7 +11,8 @@ Random.seed!(12345)
 Dₜ = Differential(t)
 @variables S(t)=0.97 E(t)=0.02 I(t)=0.01 R(t)=0.0 H(t)=0.0 D(t)=0.0
 @variables T(t) η(t) cumulative_I(t)=0.0
-@parameters β₁=0.06 β₂=0.015 β₃=0.005 α=0.003 γ₁=0.007 γ₂=0.001 δ=0.2 μ=0.04
+@discretes β₁(t)=0.06 β₂(t)=0.015 β₃(t)=0.005
+@parameters α=0.003 γ₁=0.007 γ₂=0.001 δ=0.2 μ=0.04
 eqs = [T ~ S + E + I + R + H + D
        η ~ (β₁ * E + β₂ * I + β₃ * H)
        Dₜ(S) ~ -η * S
@@ -86,8 +87,8 @@ end
 function g(res, ts, p = nothing)
     tstart = ts[1]
     tstop = ts[2]
-    start_intervention = (t == tstart) => [β₁ ~ β₁ / 2, β₂ ~ β₂ / 2, β₃ ~ β₃ / 2]
-    stop_intervention = (t == tstop) => [β₁ ~ β₁ * 2, β₂ ~ β₂ * 2, β₃ ~ β₃ * 2]
+    start_intervention = (t == tstart) => [β₁ => β₁ / 2, β₂ => β₂ / 2, β₃ => β₃ / 2]
+    stop_intervention = (t == tstop) => [β₁ => β₁ * 2, β₂ => β₂ * 2, β₃ => β₃ * 2]
     @named opttime_sys = ODESystem(eqs, t;
         discrete_events = [
             start_intervention,
@@ -139,9 +140,9 @@ function g(res, reduction_rate, p = nothing)
     reduction_rate = reduction_rate[1]
     root_eqs = [H ~ 0.05 * 0.8]
     affect = [
-        β₁ ~ β₁ * (1 - reduction_rate),
-        β₂ ~ β₂ * (1 - reduction_rate),
-        β₃ ~ β₃ * (1 - reduction_rate)
+        β₁ => β₁ * (1 - reduction_rate),
+        β₂ => β₂ * (1 - reduction_rate),
+        β₃ => β₃ * (1 - reduction_rate)
     ]
     @named mask_system = ODESystem(eqs, t; continuous_events = root_eqs => affect)
     mask_system = structural_simplify(mask_system)
